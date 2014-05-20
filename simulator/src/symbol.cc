@@ -131,6 +131,21 @@ namespace patmos
     return false;
   }
   
+  uword_t symbol_map_t::max_size(word_t symbol) const 
+  {
+    uword_t result = 0;
+    symbol_info_t val(symbol, 0, false, "");
+    symbols_t::const_iterator pos = std::lower_bound(Symbols.begin(), Symbols.end(), val);
+    while (pos != Symbols.end()) {
+      if (pos->Address != symbol) 
+        return result;
+      result = std::max(result, (uword_t)pos->Size);
+      pos++;
+    }
+    
+    return result;
+  }
+  
   std::string symbol_map_t::find(word_t address) const
   {
     std::stringstream ss;

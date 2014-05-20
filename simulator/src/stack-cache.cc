@@ -1013,3 +1013,17 @@ void block_lazy_stack_cache_t::reset_stats()
   Num_blocks_not_spilled = 0;
   Max_blocks_not_spilled = 0;
 }
+
+bool block_stack_cache_t::trace_reserve(simulator_t &s, uword_t size, 
+                                             word_t delta, uword_t new_spill, 
+                                             uword_t new_top)
+{
+  // XXX depend on option
+  if (Phase == IDLE) {
+    *s.outer << "[scspill,";
+    s.Dbg_stack.print_short(*s.outer);
+    *s.outer << ",size=" << size
+              << ",delta=" << delta
+              <<"]\n";
+  }
+}

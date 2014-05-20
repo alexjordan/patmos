@@ -307,6 +307,7 @@ int main(int argc, char **argv)
     ("debug-nopc", "do not print PC and cycles counter in debug output")
     ("debug-access", boost::program_options::value<patmos::address_t>(), "print accesses to the given address or symbol.")
     ("stats-file,o", boost::program_options::value<std::string>()->default_value(""), "write statistics to a file (stdout: -)")
+    ("debug-spills", "trace SC spill stats")
     ("print-stats", boost::program_options::value<patmos::address_t>(), "print statistics for a given function only.")
     ("flush-caches", boost::program_options::value<patmos::address_t>(), "flush all caches when reaching the given address (can be a symbol name).")
     ("full,V", "full statistics output")
@@ -467,6 +468,7 @@ int main(int argc, char **argv)
 
   patmos::debug_format_e debug_fmt= vm["debug-fmt"].as<patmos::debug_format_e>();
   bool debug_nopc = vm.count("debug-nopc") > 0;
+  bool debug_spills = vm.count("debug-spills") > 0;
   bool debug_intrs = vm.count("debug-intrs") > 0;
   uint64_t debug_cycle = vm.count("debug") ?
                                 vm["debug"].as<unsigned int>() :
@@ -571,6 +573,9 @@ int main(int argc, char **argv)
     patmos::symbol_map_t sym;
 
     patmos::simulator_t s(gm, mm, dc, ic, sc, sym, excunit);
+    s.options = vm;
+    s.outer = out;
+    assert(s.options.count("debug-spills") > 0);
 
     // set up timer device
     patmos::rtc_t rtc(s, mmbase+timer_offset, freq);

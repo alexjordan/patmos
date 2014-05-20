@@ -59,8 +59,10 @@ namespace patmos
       class dbgstack_frame_t {
       public:
         // constructor
-        dbgstack_frame_t(simulator_t &sim, uword_t func);
+        dbgstack_frame_t(simulator_t &sim, uword_t call_address, 
+                         uword_t return_offset, uword_t func);
 
+        uword_t Call_address;
         uword_t function;
         uword_t ret_base;
         uword_t ret_offs;
@@ -112,12 +114,21 @@ namespace patmos
 
       /// push - Push the current state as a stack frame on the debug stack.
       /// Only used for debugging.
-      void push(uword_t target);
+      /// @param call_offset offset of the current call instruction from its
+      /// code block.
+      /// @param return_offset return address for next instruction after 
+      /// returning from the call.
+      /// @param target The target of the call.
+      void push(uword_t call_offset, uword_t return_offset, uword_t target);
 
       /// pop - Pop the top stack frame from the debug stack,
       /// if the given return info matches.
       /// Only used for debugging.
       void pop(uword_t return_base, uword_t return_offset);
+
+      /// print - Print a short version of the debug stack trace.
+      /// @param os An output stream.
+      std::ostream &print_short(std::ostream &os) const;
 
       /// print - Print a debug stack trace.
       /// @param os An output stream.

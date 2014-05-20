@@ -2070,8 +2070,8 @@ namespace patmos
       return false;
     }
     
-    bool push_dbgstack(simulator_t &s, instruction_data_t &ops, bit_t pred,
-                        word_t callee) const 
+    bool push_dbgstack(simulator_t &s, instruction_data_t &ops, bit_t pred, 
+                       word_t return_pc, word_t callee) const 
     {
       // Enter the debug stack just once, and before we actually do the update
       // to avoid any issues with timing and stalling.
@@ -2081,7 +2081,10 @@ namespace patmos
       if (pred && !ops.MW_Initialized && !s.is_stalling(SMW)) {
         ops.MW_Initialized = true;
         
-        s.Dbg_stack.push(callee);
+        assert(ops.Address >= s.BASE);
+        uword_t return_offset = return_pc - s.BASE;
+        
+        s.Dbg_stack.push(ops.Address, return_offset, callee);
         s.Profiling.enter(callee, s.Cycle);
         
         return true;
@@ -2152,11 +2155,11 @@ namespace patmos
     
     virtual void MW(simulator_t &s, instruction_data_t &ops) const
     {
-      store_return_address(s, ops, ops.DR_Pred, s.BASE,
-                           ops.OPS.CFLi.D ? s.nPC : s.Pipeline[SEX][0].Address,
+      uword_t return_pc = ops.OPS.CFLi.D ? s.nPC : s.Pipeline[SEX][0].Address;
+      store_return_address(s, ops, ops.DR_Pred, s.BASE, return_pc,
                            ops.EX_Address, SMW, false);
       
-      push_dbgstack(s, ops, ops.DR_Pred, ops.EX_Address);
+      push_dbgstack(s, ops, ops.DR_Pred, return_pc, ops.EX_Address);
       
       fetch_and_dispatch(s, ops, ops.DR_Pred, ops.EX_Address, ops.EX_Address);
       if (!ops.OPS.CFLi.D && ops.DR_Pred && !s.is_stalling(SMW))
@@ -2323,11 +2326,11 @@ namespace patmos
     
     virtual void MW(simulator_t &s, instruction_data_t &ops) const
     {
-      store_return_address(s, ops, ops.EX_result, s.BASE, 
-                           s.Pipeline[SEX][0].Address, ops.EX_Address, 
-                           SMW, true);
+      uword_t return_pc = s.Pipeline[SEX][0].Address;
+      store_return_address(s, ops, ops.EX_result, s.BASE, return_pc, 
+                           ops.EX_Address, SMW, true);
       
-      push_dbgstack(s, ops, ops.EX_result, ops.EX_Address);
+      push_dbgstack(s, ops, ops.EX_result, return_pc, ops.EX_Address);
 
       fetch_and_dispatch(s, ops, ops.EX_result, ops.EX_Address, ops.EX_Address);
       
@@ -2365,10 +2368,10 @@ namespace patmos
     
     virtual void MW(simulator_t &s, instruction_data_t &ops) const
     {
-      store_return_address(s, ops, ops.DR_Pred, s.BASE, ops.Address, ops.EX_Address, 
-                           SMW, true);
+      store_return_address(s, ops, ops.DR_Pred, s.BASE, ops.Address, 
+                           ops.EX_Address, SMW, true);
       
-      push_dbgstack(s, ops, ops.DR_Pred, ops.EX_Address);
+      push_dbgstack(s, ops, ops.DR_Pred, ops.Address, ops.EX_Address);
 
       fetch_and_dispatch(s, ops, ops.DR_Pred, ops.EX_Address, ops.EX_Address);
       
@@ -2516,11 +2519,11 @@ namespace patmos
     
     virtual void MW(simulator_t &s, instruction_data_t &ops) const
     {
-      store_return_address(s, ops, ops.DR_Pred, s.BASE,
-                           ops.OPS.CFLrs.D ? s.nPC : s.Pipeline[SEX][0].Address,
+      uword_t return_pc = ops.OPS.CFLrs.D ? s.nPC : s.Pipeline[SEX][0].Address;
+      store_return_address(s, ops, ops.DR_Pred, s.BASE, return_pc,
                            ops.EX_Address, SMW, false);
       
-      push_dbgstack(s, ops, ops.DR_Pred, ops.EX_Address);
+      push_dbgstack(s, ops, ops.DR_Pred, return_pc, ops.EX_Address);
       
       fetch_and_dispatch(s, ops, ops.DR_Pred, ops.EX_Address, ops.EX_Address);
       

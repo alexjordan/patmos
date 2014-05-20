@@ -159,6 +159,13 @@ namespace patmos
     /// @return True if the a symbol at @symbol has a size attribute and covers @address
     bool covers(word_t symbol, word_t address) const;
     
+    /// Find the symbols matching a specific address and return the largest size
+    /// of these symbols.
+    /// \see covers
+    /// @param symbol an address of a symbol
+    /// @return The largest size of any symbol at the given address.
+    uword_t max_size(word_t symbol) const;
+  
     /// Find a symbol given a specific address.
     /// \see print
     /// @param address The address for which symbol information should be

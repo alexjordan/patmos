@@ -45,19 +45,17 @@
 #include <boost/format.hpp>
 #include <climits>
 
-#undef DEBUG
+#define DEBUG 1
 
 namespace patmos
 {
 
   dbgstack_t::dbgstack_frame_t::
-  dbgstack_frame_t(simulator_t &sim, uword_t func) 
-   : function(func), print_stats(false)
+  dbgstack_frame_t(simulator_t &sim, uword_t call_address, uword_t return_offset, 
+                   uword_t func) 
+   : Call_address(call_address), function(func), print_stats(false), 
+     ret_base(sim.BASE), ret_offs(return_offset)
   {
-    // We could use r30/r31 here ?!
-    ret_base = sim.BASE;
-    ret_offs = sim.nPC-sim.BASE;
-
     // if rsp has not been set yet, use int_max for now
     uword_t sp = sim.GPR.get(rsp).get();
     caller_tos_shadowstack = sp ? sp : INT_MAX;
@@ -74,7 +72,7 @@ namespace patmos
   
   void dbgstack_t::initialize(uword_t entry)
   {
-    push(entry);
+    push(0, 0, entry);
   }
 
 
@@ -102,8 +100,8 @@ namespace patmos
     // *not* the TOS address.
     if (frame.caller_tos_stackcache > sim.Stack_cache.size()) {
 #ifdef DEBUG
-      std::cerr << "\nWrong stackcache: " << frame.caller_tos_stackcache 
-                << " > " << sim.Stack_cache.size() << "\n";
+      //std::cerr << "\nWrong stackcache: " << frame.caller_tos_stackcache 
+      //          << " > " << sim.Stack_cache.size() << "\n";
 #endif
       // At the moment we do not take a changed stack size as a hint for a
       // change of the active frame, to support debugging of context switching
@@ -116,6 +114,7 @@ namespace patmos
               sim.Symbols.covers(frame.function, sim.BASE))) 
     {
       std::cerr << "\nWrong function base: " << frame.function 
+                << ", size: " << sim.Symbols.max_size(frame.function)
                 << ", base: " << sim.BASE << "\n";
     }
 #endif
@@ -127,7 +126,8 @@ namespace patmos
 
 
 
-  void dbgstack_t::push(uword_t target)
+  void dbgstack_t::push(uword_t call_address, uword_t return_offset, 
+                        uword_t target)
   {
     if (!stack.empty()) {
       // Check if the call is coming from the TOS.
@@ -137,13 +137,14 @@ namespace patmos
 #endif
         // We are resuming after some longjmp or so..
         // For now, just nuke the whole stack
-        while (!stack.empty()) {
-          stack.pop_back();
-        }
+//         while (!stack.empty()) {
+//           stack.pop_back();
+//         }
       }
     }
     // Create a new stack frame
-    stack.push_back( dbgstack_frame_t(sim, target) );
+    stack.push_back( dbgstack_frame_t(sim, call_address, return_offset, 
+                                      target) );
     
     if (target == print_function && !found_print_function) {
       // TODO this should be moved into a separate class, managing stats 
@@ -172,6 +173,13 @@ namespace patmos
         found_print_function = false;
       }
       stack.pop_back();
+    }
+    else {
+#ifdef DEBUG
+      std::cerr << "\nWrong return base/offset: " 
+                << frame.ret_base << "!=" << return_base << ", "
+                << frame.ret_offs << "!=" << return_offset << "\n";
+#endif
     }
   }
 
@@ -211,6 +219,37 @@ namespace patmos
   }
 
 
+ 
+  std::ostream &dbgstack_t::print_short(std::ostream &os) const
+  {
+    // TODO Obviously, it would be nicer to print the actual stack
+    // frame, but since we have up to three different stacks and no
+    // easy way to determine the stack frame size, it is much easier
+    // to just keep track of the stack frames separately. This has the
+    // advantage that we can store more debug info in the frames.
+    // This could be removed when we get GDB support into the simulator ;)
+
+    if (stack.empty()) {
+      sim.Symbols.print(os, sim.BASE, true);
+      return os;
+    }
+      
+    bool first = true;
+    for (std::vector<dbgstack_frame_t>::const_iterator
+         fi=stack.begin(), fe=stack.end(); fi!=fe; ++fi) {
+
+      if (!first) os << "::";
+      
+      os << fi->Call_address << ":";
+                
+      sim.Symbols.print(os, fi->function, true) ;
+    
+      first = false;
+    }
+    
+    return os;
+  }
+
   std::ostream &dbgstack_t::print(std::ostream &os) const
   {
     // TODO Obviously, it would be nicer to print the actual stack
@@ -223,7 +262,7 @@ namespace patmos
     os << "Stacktrace:\n";
 
     if (stack.empty()) {
-      print_stackframe(os, 0, dbgstack_frame_t(sim, sim.BASE), 0);
+      print_stackframe(os, 0, dbgstack_frame_t(sim, 0, 0, sim.BASE), 0);
       return os;
     }
 

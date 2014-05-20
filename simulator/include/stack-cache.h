@@ -336,7 +336,10 @@ namespace patmos
       return (spill - top) / Num_block_bytes;
     }
   public:
-    /// Construct a block-based stack cache.
+    virtual bool trace_reserve(simulator_t &s, uword_t size, word_t delta,
+        uword_t new_spill, uword_t new_top);
+
+    /// Construct a black-based stack cache.
     /// @param memory The memory to spill/fill.
     /// @param num_blocks Size of the stack cache in blocks.
     block_stack_cache_t(memory_t &memory, unsigned int num_blocks, 

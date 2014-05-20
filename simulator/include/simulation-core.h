@@ -48,6 +48,8 @@
 #include <limits>
 #include <iostream>
 
+#include <boost/program_options.hpp>
+
 namespace patmos
 {
   // forward definitions
@@ -358,6 +360,9 @@ namespace patmos
     
     /// Flush all caches.
     void flush_caches();
+
+    boost::program_options::variables_map options;
+    std::ostream *outer;
   };
 
 
