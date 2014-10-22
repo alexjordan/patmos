@@ -362,7 +362,9 @@ namespace patmos
     void flush_caches();
 
     boost::program_options::variables_map options;
-    std::ostream *outer;
+
+    /// Debug output accesible by other module
+    std::ostream *dout;
   };
 
 

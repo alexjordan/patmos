@@ -1020,9 +1020,9 @@ bool block_stack_cache_t::trace_reserve(simulator_t &s, uword_t size,
 {
   // XXX depend on option
   if (Phase == IDLE) {
-    *s.outer << "[scspill,";
-    s.Dbg_stack.print_short(*s.outer);
-    *s.outer << ",size=" << size
+    *s.dout << "[scspill,";
+    s.Dbg_stack.print_short(*s.dout);
+    *s.dout << ",size=" << size
               << ",delta=" << delta
               <<"]\n";
   }

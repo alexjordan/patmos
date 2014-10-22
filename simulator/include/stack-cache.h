@@ -62,6 +62,14 @@ namespace patmos
     virtual bool is_ready();
     
   public:
+    virtual bool trace_reserve(simulator_t &s, uword_t size, word_t delta,
+                               uword_t new_spill, uword_t new_top) {}
+    virtual bool trace_free(simulator_t &s, uword_t size, word_t delta,
+                            uword_t new_spill, uword_t new_top) {}
+    virtual bool trace_ensure(simulator_t &s, uword_t size, word_t delta,
+                              uword_t new_spill, uword_t new_top) {}
+    virtual bool trace_spill(simulator_t &s, uword_t size, word_t delta,
+                             uword_t new_spill, uword_t new_top) {}
     virtual ~stack_cache_t() {}
 
     /// Prepare for reserveing a given number of bytes, and update the stack 

@@ -553,7 +553,6 @@ int main(int argc, char **argv)
     dout = patmos::get_stream<std::ofstream>(debug_out, std::cerr);
     sout = patmos::get_stream<std::ofstream>(stats_out, std::cerr);
 
-
     // check if the uart input stream is a tty.
     bool uin_istty = (uin == &std::cin) && isatty(STDIN_FILENO);
 
@@ -574,7 +573,7 @@ int main(int argc, char **argv)
 
     patmos::simulator_t s(gm, mm, dc, ic, sc, sym, excunit);
     s.options = vm;
-    s.outer = out;
+    s.dout = dout;
     assert(s.options.count("debug-spills") > 0);
 
     // set up timer device

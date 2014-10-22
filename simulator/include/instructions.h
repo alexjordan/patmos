@@ -1943,6 +1943,7 @@ namespace patmos
     virtual bool MW_cache(simulator_t &s, uword_t size, word_t delta, \
                           uword_t stack_spill, uword_t stack_top) const \
     { \
+      s.Stack_cache.trace_ ## function(s, size, delta, stack_spill, stack_top); \
       return s.Stack_cache.function(s, size, delta, stack_spill, stack_top); \
     } \
   };
